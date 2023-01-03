@@ -9,9 +9,10 @@ from PIL import Image
 import pandas as pd
 import numpy as np
 import albumentations
-import multiprocessing
+from sklearn.utils import shuffle
 
 from logger import logger
+
 
 class COVIDDatasetReader:
     """
@@ -42,7 +43,7 @@ class COVIDDatasetReader:
         self.data = self._read() if preloaded_data is None else preloaded_data
 
     @property
-    def features(self) -> np.ndarray:
+    def images(self) -> np.ndarray:
         """
         It returns the features of the dataset.
         :return: numpy.ndarray which has the features of the dataset.
@@ -57,6 +58,14 @@ class COVIDDatasetReader:
         """
         return self.data.iloc[:, 1].values
 
+    def shuffle(self) -> None:
+        """
+        It shuffles the data.
+        :return: None
+        """
+        self.data = shuffle(self.data)
+
+    # @TODO: Add the augmentation methods.
     def add_augmented_data(self, prob: float = 1):
         """
         It creates augmented data by following methods:
@@ -70,34 +79,34 @@ class COVIDDatasetReader:
         :param augmentor: The augmentor which is used to create augmented data.
         :return: None
         """
-        albumentations_list =  [
+        albumentations_list = [
             # albumentations.RandomFog(p=prob),
             albumentations.GaussianBlur(p=prob),
             albumentations.RandomBrightnessContrast(p=prob),
             albumentations.VerticalFlip(p=prob),
-            albumentations.HorizontalFlip(p=prob)
+            albumentations.HorizontalFlip(p=prob),
         ]
 
         # Create the multiprocessing.Queue instance.
-        multiprocessing.set_start_method("spawn")
-        mp_queue = multiprocessing.Queue()
+        # multiprocessing.set_start_method("spawn")
+        # mp_queue = multiprocessing.Queue()
         for augmentor in albumentations_list:
             logger.debug("Augmenting data with %s" % augmentor.__class__.__name__)
-            augmented_data = self.data.copy()
-            process = multiprocessing.Process(
-                target=self._augment,
-                args=(augmented_data, augmentor, mp_queue)
-            )
-            process.start()
+            # augmented_data = self.data.copy()
+            # process = multiprocessing.Process(
+            #    target=self._augment, args=(augmented_data, augmentor, mp_queue)
+            # )
+            # process.start()
             logger.debug("Augmented data creator process started.")
 
         # Get the augmented data.
         for _ in range(len(albumentations_list)):
-            augmented_data = mp_queue.get()
+            # augmented_data = mp_queue.get()
             logger.debug("Augmented data is read successfully.")
-            self.data = pd.concat([self.data, augmented_data])
+            # self.data = pd.concat([self.data, augmented_data])
             logger.debug("Augmented data is added successfully.")
 
+    # @TODO: Add the augmentation methods.
     def _augment(self, data_list_to_augment, augmentor, mp_queue) -> None:
         """This function augments the image data with the given augmentor.
         :param data_list_to_augment: The image data which is used to augment.
@@ -106,11 +115,15 @@ class COVIDDatasetReader:
         return the augmented image data.
         :return: None
         """
-        data_list_to_augment["image"] = data_list_to_augment["image"].apply(
-            lambda image_data: augmentor(image=np.array(image_data))["image"]
-        )
+        for index, row in data_list_to_augment.iterrows():
+            data_list_to_augment.at[index, "image"] = augmentor(
+                image=np.array(row["image"])
+            )["image"]
+            data_list_to_augment.at[index, "masks"] = augmentor(
+                image=np.array(row["masks"])
+            )["image"]
+
         mp_queue.put(data_list_to_augment)
-        logger.debug(f"Augmented data creator process ended for {augmentor.__class__.__name__}.")
 
     def _read(self) -> pd.DataFrame:
         """
@@ -120,7 +133,7 @@ class COVIDDatasetReader:
         of the dataset.
         :return: pandas.DataFrame which has two columns.
         """
-        logger.info("Reading the images and masks.")
+        logger.info("Reading the images.")
 
         # Read the PNG files.
         images = [
@@ -129,15 +142,18 @@ class COVIDDatasetReader:
         ]
         logger.debug("Images are read successfully.")
 
-        masks = [
-            Image.open(os.path.join(self.dir_masks, file))
-            for file in os.listdir(self.dir_masks)
-        ]
-        logger.debug("Masks are read successfully.")
+        # masks = [
+        #    Image.open(os.path.join(self.dir_masks, file))
+        #    for file in os.listdir(self.dir_masks)
+        # ]
+        # logger.debug("Masks are read successfully.")
 
         # Construct the DataFrame.
         data = pd.DataFrame(
-            {"image": images, "masks": masks, "covid_status": self.dir_attr}
+            {
+                "image": images,
+                # "masks": masks,
+                "covid_status": self.dir_attr}
         )
         logger.debug("DataFrame is constructed successfully.")
 
@@ -181,8 +197,13 @@ if __name__ == "__main__":
 
     # All the cases.
     covid_all = covid_pos + covid_neg
-    print(len(covid_all))
 
-    # Add augmented data.
-    covid_all.add_augmented_data()
-    print(len(covid_all))
+    # Some statistics.
+    print("Total number of data:", len(covid_all))
+    print("Number of COVID-19 positive cases:", len(covid_pos))
+    print("Number of COVID-19 negative cases:", len(covid_neg))
+    print("Head table of labels:", covid_all.labels[:10])
+
+    covid_all.shuffle()
+
+    print("After shuffle head table of labels:", covid_all.labels[:10])
