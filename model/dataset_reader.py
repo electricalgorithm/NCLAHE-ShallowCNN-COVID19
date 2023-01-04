@@ -65,15 +65,20 @@ class COVIDDatasetReader:
         """
         self.data = shuffle(self.data)
 
-    def split_data(self, test_size: float = 0.2) -> tuple:
+    def split_data(self, validation_size: float = 0.25, test_size: float = 0.2) -> tuple:
         """
         It splits the data into train and test data.
         :param test_size: The test size of the data.
-        :return: tuple which contains the train and test data.
+        :return: tuple which contains the train, validation and test data.
         """
-        train_data = self.data.iloc[:int(len(self.data) * (1 - test_size))]
-        test_data = self.data.iloc[int(len(self.data) * (1 - test_size)):]
-        return train_data, test_data
+        # Get the train and test data.
+        train_data, test_data = self._split_data(data=self.data, test_size=test_size)
+        # Get the train and validation data.
+        train_data, validation_data = self._split_data(
+            data=train_data, test_size=validation_size
+        )
+        # Return the train, validation and test data.
+        return train_data, validation_data, test_data
 
     # @TODO: Add the augmentation methods.
     def add_augmented_data(self, prob: float = 1):
@@ -115,6 +120,19 @@ class COVIDDatasetReader:
             logger.debug("Augmented data is read successfully.")
             # self.data = pd.concat([self.data, augmented_data])
             logger.debug("Augmented data is added successfully.")
+
+    def _split_data(self, data: pd.DataFrame, test_size: float) -> tuple:
+        """
+        It splits the data into train and test data.
+        :param data: The data which is used to split.
+        :param test_size: The test size of the data.
+        :return: tuple which contains the train and test data.
+        """
+        # Get the train and test data.
+        train_data = data.iloc[: int(len(data) * (1 - test_size))]
+        test_data = data.iloc[int(len(data) * (1 - test_size)) :]
+        # Return the train and test data.
+        return train_data, test_data
 
     # @TODO: Add the augmentation methods.
     def _augment(self, data_list_to_augment, augmentor, mp_queue) -> None:
@@ -163,7 +181,8 @@ class COVIDDatasetReader:
             {
                 "image": images,
                 # "masks": masks,
-                "covid_status": self.dir_attr}
+                "covid_status": self.dir_attr,
+            }
         )
         logger.debug("DataFrame is constructed successfully.")
 
