@@ -65,6 +65,16 @@ class COVIDDatasetReader:
         """
         self.data = shuffle(self.data)
 
+    def split_data(self, test_size: float = 0.2) -> tuple:
+        """
+        It splits the data into train and test data.
+        :param test_size: The test size of the data.
+        :return: tuple which contains the train and test data.
+        """
+        train_data = self.data.iloc[:int(len(self.data) * (1 - test_size))]
+        test_data = self.data.iloc[int(len(self.data) * (1 - test_size)):]
+        return train_data, test_data
+
     # @TODO: Add the augmentation methods.
     def add_augmented_data(self, prob: float = 1):
         """
