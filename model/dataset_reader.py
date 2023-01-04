@@ -71,6 +71,8 @@ class COVIDDatasetReader:
         :param test_size: The test size of the data.
         :return: tuple which contains the train, validation and test data.
         """
+        # Shuffle the data.
+        self.shuffle()
         # Get the train and test data.
         train_data, test_data = self._split_data(data=self.data, test_size=test_size)
         # Get the train and validation data.
