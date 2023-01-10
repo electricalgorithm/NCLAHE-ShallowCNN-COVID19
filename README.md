@@ -5,10 +5,10 @@ The convolutional neural network that I've created follows the popular pattern o
 - 2D Convolutional Layer with 32 Filters and 3x3 Kernel (No Padding)
 - Max Pooling Layer with 2x2 Kernel, with 2x2 Stride.
 - Dropout with 10% probability.
-- 2D Convolutional Layer with 32 Filters and 3x3 Kernel (No Padding)
+- 2D Convolutional Layer with 64 Filters and 3x3 Kernel (No Padding)
 - Max Pooling Layer with 2x2 Kernel, with 2x2 Stride.
 - Dropout with 10% probability.
-- 2D Convolutional Layer with 32 Filters and 3x3 Kernel (No Padding)
+- 2D Convolutional Layer with 128 Filters and 3x3 Kernel (No Padding)
 - Max Pooling Layer with 2x2 Kernel, with 2x2 Stride.
 - Dense layer with 128 neurons and ReLU activation.
 - Dense layer with 10 neurons and ReLU activation.
