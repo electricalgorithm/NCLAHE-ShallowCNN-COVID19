@@ -1,4 +1,7 @@
 # A Shallow CNN for COVID-19 Detection using Preprocessed CXR Images
+
+[![DOI](https://zenodo.org/badge/584918831.svg)](https://doi.org/10.5281/zenodo.15488233)
+
 It is a convolutional neural network which classifies chest x-rays images as if they are COVID-19 positive or not. Chest x-ray images firstly preprocessed with a max-min normalizator and contrast limited adaptive histogram equalizator, and then fed into the network. The accuracy results on the test dataset with 128x128 images are 94.63%.
 
 The convolutional neural network that I've created follows the popular pattern of doubling filter size:
